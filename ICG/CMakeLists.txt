@@ -64,6 +64,10 @@ if (HAS_MTUNE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native")
 endif ()
 
+# We need the libicg to be generated with Position Independent Code
+# otherwise compilation error in the pybind11 code 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -fPIC")
+
 # Debug settings
 check_cxx_compiler_flag(-ggdb HAS_GGDB)
 check_cxx_compiler_flag(-Z7 HAS_Z7)
@@ -121,11 +125,12 @@ endif ()
 # Directories
 # =============================================================================
 
-# Include Directories
-include_directories("${CMAKE_SOURCE_DIR}/include")
-include_directories("${CMAKE_SOURCE_DIR}/third_party")
-
 # Sub Directories
 add_subdirectory(src)
-add_subdirectory(examples)
+# add_subdirectory(examples)  # TODO: issue with omp_get_max_threads()
 add_subdirectory(doc)
+
+
+# Include Directories
+target_include_directories(icg PUBLIC "include")
+target_include_directories(icg PUBLIC "third_party")
