@@ -40,7 +40,7 @@ if (OPENMP_FOUND)
         set(CMAKE_EXE_LINKER_FLAGS
                 "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
     else ()
-        set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
         set(CMAKE_EXE_LINKER_FLAGS
                 "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
@@ -66,7 +66,7 @@ endif ()
 
 # We need the libicg to be generated with Position Independent Code
 # otherwise compilation error in the pybind11 code 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 # Debug settings
 check_cxx_compiler_flag(-ggdb HAS_GGDB)
@@ -127,7 +127,7 @@ endif ()
 
 # Sub Directories
 add_subdirectory(src)
-# add_subdirectory(examples)  # TODO: issue with omp_get_max_threads()
+add_subdirectory(examples)
 add_subdirectory(doc)
 
 
