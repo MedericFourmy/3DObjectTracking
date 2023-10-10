@@ -10,6 +10,9 @@ project(M3T)
 option(USE_AZURE_KINECT "Use Azure Kinect" ON)
 option(USE_REALSENSE "Use RealSense D435" ON)
 option(USE_GTEST "Use gtest" ON)
+option(BUILD_TEST "Build tests" ON)
+option(BUILD_EXAMPLES "Build example executables" ON)
+option(BUILD_DOC "Build docs" ON)
 
 
 # Libraries
@@ -132,6 +135,13 @@ endif ()
 # Directories
 # =============================================================================
 add_subdirectory(src)
-add_subdirectory(test)
-add_subdirectory(examples)
-add_subdirectory(doc)
+
+if (BUILD_TEST)
+    add_subdirectory(test)
+endif ()
+if (BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
+if (BUILD_DOC)
+    add_subdirectory(doc)
+endif ()
