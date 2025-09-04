@@ -94,16 +94,17 @@ target_include_directories(glad PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glad/include>
     $<INSTALL_INTERFACE:include/glad/include>)    
 target_link_libraries(glad PUBLIC ${CMAKE_DL_LIBS})
+if (NOT TARGET glad::glad)
+    add_library(glad::glad ALIAS glad)
+endif()
 
 # Add install rules for glad
 install(TARGETS glad
         EXPORT m3t_target
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
         INCLUDES DESTINATION include)
 
-set(LIBRARIES Eigen3::Eigen ${OpenCV_LIBRARIES} OpenMP::OpenMP_CXX OpenGL::GL glad)
+
+set(LIBRARIES Eigen3::Eigen ${OpenCV_LIBRARIES} OpenMP::OpenMP_CXX OpenGL::GL glad::glad)
 if (USE_EGL)
     list(APPEND LIBRARIES OpenGL::EGL)
 else ()
@@ -139,8 +140,10 @@ install(TARGETS m3t
         EXPORT m3t_target
         LIBRARY DESTINATION lib
         PUBLIC_HEADER DESTINATION include/m3t)
+
 install(DIRECTORY ../third_party/
         DESTINATION include)
+
 install(EXPORT m3t_target 
         FILE M3TConfig.cmake
         DESTINATION lib/cmake/M3T)
