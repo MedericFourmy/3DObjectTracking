@@ -3,8 +3,7 @@
 
 #include <m3t/basic_depth_renderer.h>
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <glad/glad.h>
 
 namespace m3t {
 

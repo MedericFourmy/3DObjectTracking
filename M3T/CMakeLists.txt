@@ -7,10 +7,11 @@ project(M3T)
 
 # Options
 # =============================================================================
-option(USE_AZURE_KINECT "Use Azure Kinect" ON)
-option(USE_REALSENSE "Use RealSense D435" ON)
-option(USE_GTEST "Use gtest" ON)
-option(USE_XFEATURES2D "Use OpenCV xfeatures2d" OFF)
+option(USE_AZURE_KINECT "Use Azure Kinect" OFF)
+option(USE_REALSENSE "Use RealSense D435" OFF)
+option(USE_GTEST "Use gtest" OFF)
+option(USE_XFEATURES2D "Use OpenCV xfeatures2d" OFF) 
+option(USE_EGL "Use EGL instead of GLFW" OFF)
 
 
 # Libraries
@@ -18,7 +19,6 @@ option(USE_XFEATURES2D "Use OpenCV xfeatures2d" OFF)
 
 # Build static on Windows
 if (WIN32)
-    set(GLEW_STATIC true)
     set(OpenCV_STATIC true)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -MTd")
@@ -28,12 +28,15 @@ endif ()
 # Used libraries
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 3.3.2 REQUIRED)
-find_package(GLEW REQUIRED)
 if (UNIX)
     set(OpenGL_GL_PREFERENCE LEGACY)
 endif ()
-find_package(OpenGL REQUIRED)
-find_package(glfw3 3.1.2 REQUIRED)
+if (USE_EGL)
+    find_package(OpenGL REQUIRED COMPONENTS OpenGL EGL)
+else ()
+    find_package(OpenGL REQUIRED COMPONENTS OpenGL)
+    find_package(glfw3 3.1.2 REQUIRED)
+endif ()
 
 set(OpenCV_COMPONENTS core imgproc highgui imgcodecs calib3d features2d)
 if(USE_XFEATURES2D)
@@ -41,7 +44,7 @@ if(USE_XFEATURES2D)
     set(OpenCV_COMPONENTS ${OpenCV_COMPONENTS} xfeatures2d)
 endif()
 
-find_package(OpenCV 4.3.0 REQUIRED COMPONENTS ${OpenCV_COMPONENTS} OPTIONAL_COMPONENTS cudafeatures2d)
+find_package(OpenCV 4.2.0 REQUIRED COMPONENTS ${OpenCV_COMPONENTS} OPTIONAL_COMPONENTS cudafeatures2d)
 
 if (USE_AZURE_KINECT)
     find_package(k4a 1.3.0 REQUIRED)
@@ -136,6 +139,10 @@ endif ()
 if (USE_GTEST)
     add_definitions( -DUSE_GTEST=TRUE )
 endif ()
+if (USE_EGL)
+    add_definitions( -DUSE_EGL=TRUE )
+endif ()
+
 
 
 # Directories

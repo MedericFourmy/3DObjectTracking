@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2023 Manuel Stoiber, German Aerospace Center (DLR)
 
-#include <m3t/renderer_geometry.h>
+#include <m3t/renderer_geometry_glfw.h>
 
 namespace m3t {
 
@@ -57,9 +57,8 @@ bool RendererGeometry::SetUp() {
     }
 
     glfwMakeContextCurrent(window_);
-    glewExperimental = true;
-    if (glewInit() != GLEW_OK) {
-      std::cerr << "Failed to initialize GLEW" << std::endl;
+    if (!gladLoadGL()) {
+      std::cerr << "Failed to initialize GL" << std::endl;
       glfwDestroyWindow(window_);
       window_ = nullptr;
       glfwTerminate();
@@ -227,8 +226,20 @@ void RendererGeometry::CreateGLVertexObjects(const std::vector<float> &vertices,
 }
 
 void RendererGeometry::DeleteGLVertexObjects(RenderDataBody *render_data_body) {
-  glDeleteBuffers(1, &render_data_body->vbo);
-  glDeleteVertexArrays(1, &render_data_body->vao);
+  // glDeleteBuffers(1, &render_data_body->vbo);
+  // glDeleteVertexArrays(1, &render_data_body->vao);
+  if (!render_data_body) return;
+  
+  // Validate that VAO/VBO exist before deletion
+  if (render_data_body->vao != 0) {
+    glDeleteVertexArrays(1, &render_data_body->vao);
+    render_data_body->vao = 0;
+  }
+  
+  if (render_data_body->vbo != 0) {
+    glDeleteBuffers(1, &render_data_body->vbo);
+    render_data_body->vbo = 0;
+  }
 }
 
 }  // namespace m3t

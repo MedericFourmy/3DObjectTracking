@@ -52,3 +52,9 @@ if (USE_AZURE_KINECT)
     add_executable(run_on_camera_sequence run_on_camera_sequence.cpp)
     target_link_libraries(run_on_camera_sequence PUBLIC m3t)
 endif ()
+
+
+if (USE_REALSENSE)
+    add_executable(run_on_camera_sequence_realsense run_on_camera_sequence_realsense.cpp)
+    target_link_libraries(run_on_camera_sequence_realsense PUBLIC m3t)
+endif ()

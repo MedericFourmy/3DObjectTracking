@@ -5,7 +5,6 @@ cmake_minimum_required(VERSION 3.10)
 set(SOURCES
         common.cpp
         body.cpp
-        renderer_geometry.cpp
         renderer.cpp
         normal_renderer.cpp
         silhouette_renderer.cpp
@@ -69,6 +68,15 @@ set(HEADERS
         ../include/m3t/tracker.h
         ../include/m3t/generator.h)
 
+if (USE_EGL)
+    list(APPEND SOURCES renderer_geometry_egl.cpp)
+    list(APPEND HEADERS ../include/m3t/renderer_geometry_egl.h)
+else ()
+    list(APPEND SOURCES renderer_geometry_glfw.cpp)
+    list(APPEND HEADERS ../include/m3t/renderer_geometry_glfw.h)
+endif ()
+
+
 if (USE_AZURE_KINECT)
     list(APPEND SOURCES azure_kinect_camera.cpp)
     list(APPEND HEADERS ../include/m3t/azure_kinect_camera.h)
@@ -81,7 +89,26 @@ endif ()
 
 # Define libraries
 # =============================================================================
-set(LIBRARIES Eigen3::Eigen OpenGL::GL GLEW::GLEW glfw ${OpenCV_LIBRARIES} OpenMP::OpenMP_CXX)
+add_library(glad STATIC ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glad/src/glad.c)
+target_include_directories(glad PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glad/include>
+    $<INSTALL_INTERFACE:include/glad/include>)    
+target_link_libraries(glad PUBLIC ${CMAKE_DL_LIBS})
+
+# Add install rules for glad
+install(TARGETS glad
+        EXPORT m3t_target
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include)
+
+set(LIBRARIES Eigen3::Eigen ${OpenCV_LIBRARIES} OpenMP::OpenMP_CXX OpenGL::GL glad)
+if (USE_EGL)
+    list(APPEND LIBRARIES OpenGL::EGL)
+else ()
+    list(APPEND LIBRARIES glfw)
+endif ()
 if (UNIX)
     list(APPEND LIBRARIES pthread stdc++fs)
 endif ()
