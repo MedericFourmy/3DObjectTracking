@@ -12,6 +12,8 @@ option(USE_REALSENSE "Use RealSense D435" OFF)
 option(USE_GTEST "Use gtest" OFF)
 option(USE_XFEATURES2D "Use OpenCV xfeatures2d" OFF) 
 option(USE_EGL "Use EGL instead of GLFW" OFF)
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_DOC "Build DOC" OFF)
 
 
 # Libraries
@@ -149,5 +151,9 @@ endif ()
 # =============================================================================
 add_subdirectory(src)
 add_subdirectory(test)
-add_subdirectory(examples)
-add_subdirectory(doc)
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
+if(BUILD_DOC)
+    add_subdirectory(doc)
+endif ()
