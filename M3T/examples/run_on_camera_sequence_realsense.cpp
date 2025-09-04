@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
 
     // Set up detector
     std::filesystem::path detector_path{directory /
-                                        (body_name + "_detector.yaml")};
+                                        (body_name + "_static_detector.yaml")};
     auto detector_ptr{std::make_shared<m3t::StaticDetector>(
         body_name + "_detector", detector_path, optimizer_ptr)};
     tracker_ptr->AddDetector(detector_ptr);
