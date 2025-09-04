@@ -56,7 +56,7 @@ class RendererGeometry {
   RendererGeometry(const std::string &name);
   RendererGeometry(const RendererGeometry &) = delete;
   RendererGeometry &operator=(const RendererGeometry &) = delete;
-  ~RendererGeometry();  // deletes glfw context
+  virtual ~RendererGeometry();  // deletes glfw context
   bool SetUp();         // creates glfw context
 
   // Configure bodies

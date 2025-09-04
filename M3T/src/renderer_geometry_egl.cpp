@@ -7,32 +7,181 @@ namespace m3t {
 
 int RendererGeometry::n_instances_ = 0;
 
+bool RendererGeometry::CheckEGLError(const char* operation) {
+    EGLint error = eglGetError();
+    if (error != EGL_SUCCESS) {
+        std::cerr << "EGL error during " << operation << ": 0x" 
+                  << std::hex << error << std::dec << std::endl;
+        return false;
+    }
+    return true;
+}
+
 RendererGeometry::RendererGeometry(const std::string &name) : name_{name} {}
 
-RendererGeometry::~RendererGeometry() {
-  if (initial_set_up_) {
-    eglMakeCurrent(display_, surface_, surface_, context_);
-    for (auto &render_data_body : render_data_bodies_) {
-      DeleteGLVertexObjects(&render_data_body);
-    }
-    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+RendererGeometry::~RendererGeometry() {}
+// RendererGeometry::~RendererGeometry() {
+//   if (initial_set_up_) {
+//     eglMakeCurrent(display_, surface_, surface_, context_);
+//     for (auto &render_data_body : render_data_bodies_) {
+//       DeleteGLVertexObjects(&render_data_body);
+//     }
+//     eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     
-    if (context_ != EGL_NO_CONTEXT) {
-      eglDestroyContext(display_, context_);
-      context_ = EGL_NO_CONTEXT;
-    }
-    if (surface_ != EGL_NO_SURFACE) {
-      eglDestroySurface(display_, surface_);
-      surface_ = EGL_NO_SURFACE;
-    }
-    if (display_ != EGL_NO_DISPLAY) {
-      eglTerminate(display_);
-      display_ = EGL_NO_DISPLAY;
-    }
+//     if (context_ != EGL_NO_CONTEXT) {
+//       eglDestroyContext(display_, context_);
+//       context_ = EGL_NO_CONTEXT;
+//     }
+//     if (surface_ != EGL_NO_SURFACE) {
+//       eglDestroySurface(display_, surface_);
+//       surface_ = EGL_NO_SURFACE;
+//     }
+//     if (display_ != EGL_NO_DISPLAY) {
+//       eglTerminate(display_);
+//       display_ = EGL_NO_DISPLAY;
+//     }
     
-    n_instances_--;
-  }
-}
+//     n_instances_--;
+//   }
+// }
+
+// ////////////////////
+// // V2
+// ////////////////////
+// RendererGeometry::~RendererGeometry() {
+//   const std::lock_guard<std::mutex> lock{mutex_};
+
+//   if (initial_set_up_) {
+//     // Make context current one last time for cleanup
+//     if (display_ != EGL_NO_DISPLAY) {
+//       eglMakeCurrent(display_, surface_, surface_, context_);
+      
+//       // Delete OpenGL resources first
+//       for (auto &render_data_body : render_data_bodies_) {
+//         DeleteGLVertexObjects(&render_data_body);
+//       }
+      
+//       // Detach context before destroying
+//       eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+      
+//       // Clean up EGL resources in correct order
+//       if (context_ != EGL_NO_CONTEXT) {
+//         eglDestroyContext(display_, context_);
+//         context_ = EGL_NO_CONTEXT;
+//       }
+      
+//       if (surface_ != EGL_NO_SURFACE) {
+//         eglDestroySurface(display_, surface_);
+//         surface_ = EGL_NO_SURFACE;
+//       }
+      
+//       // Terminate display last
+//       eglTerminate(display_);
+//       display_ = EGL_NO_DISPLAY;
+//     }
+    
+//     n_instances_--;
+//     initial_set_up_ = false;
+//   }
+// }
+
+
+////////////////////
+// V3
+////////////////////
+// RendererGeometry::~RendererGeometry() {
+//     // Prevent other threads from accessing during cleanup
+//     std::cerr << "~RendererGeometry" << std::endl;
+//     std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
+//     if (!lock.owns_lock()) {
+//         std::cerr << "AAAAA" << std::endl;
+//         // If we can't get the lock, detach context and wait
+//         if (display_ != EGL_NO_DISPLAY) {
+//             std::cerr << "ZZZZZZ" << std::endl;
+//             eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+//             CheckEGLError("eglMakeCurrent");
+//         }
+//         lock.lock();
+//     }
+
+//     if (initial_set_up_ && display_ != EGL_NO_DISPLAY) {
+//         std::cerr << "pppppppppp" << std::endl;
+//         // Only try to make context current if we have valid objects
+//         if (context_ != EGL_NO_CONTEXT && surface_ != EGL_NO_SURFACE) {
+//             std::cerr << "wwwwwwww" << std::endl;
+//             if (eglMakeCurrent(display_, surface_, surface_, context_) && CheckEGLError("eglMakeCurrent")) {
+//                 std::cerr << "eeeeeeeeeeeee" << std::endl;
+//                 // Delete OpenGL resources only if context is current
+//                 for (auto &render_data_body : render_data_bodies_) {
+//                   DeleteGLVertexObjects(&render_data_body);
+//                 }
+                
+//                 std::cerr << "rrrrrrrrrrr" << std::endl;
+//                 // Clear vectors to prevent double-free
+//                 render_data_bodies_.clear();
+//                 std::cerr << "ttttttt" << std::endl;
+//                 body_ptrs_.clear();
+//                 std::cerr << "yyyyyyyyy" << std::endl;
+                
+//                 // Detach context
+//                 eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+//                 CheckEGLError("eglMakeCurrent");
+//                 std::cerr << "uuuuu" << std::endl;
+//             }
+//         }
+
+//         std::cerr << "llllllllllllllllll" << std::endl;
+//         // Destroy EGL resources in reverse order of creation
+//         if (surface_ != EGL_NO_SURFACE) {
+//             eglDestroySurface(display_, surface_);
+//             CheckEGLError("eglDestroySurface");
+//             std::cerr << "mmmmmmmmmmmmm" << std::endl;
+//             surface_ = EGL_NO_SURFACE;
+//             std::cerr << "mmmm" << std::endl;
+//         }
+        
+//         // if (context_ != EGL_NO_CONTEXT) {
+//         //     std::cerr << "BEFORE eglDestroyContext" << std::endl;
+//         //     eglDestroyContext(display_, context_);
+//         //     std::cerr << "AFTER eglDestroyContext" << std::endl;
+//         //     context_ = EGL_NO_CONTEXT;
+//         // }
+//         if (context_ != EGL_NO_CONTEXT) {
+//             std::cerr << "BEFORE eglMakeCurrent" << std::endl;
+//             // Ensure context is not current before destroying
+//             if (eglGetCurrentContext() == context_) {
+//                 eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+//                 CheckEGLError("eglMakeCurrent");
+//             }
+//             std::cerr << "BEFORE eglDestroyContext" << std::endl;
+//             // Check if any other thread is using the context
+//             std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            
+//             // Double check context validity
+//             if (display_ != EGL_NO_DISPLAY && context_ != EGL_NO_CONTEXT) {
+//                 std::cerr << "JUST BEFORE eglDestroyContext" << std::endl;
+//                 CheckEGLError("eglDestroyContext");
+//                 // Wait for any pending GL operations -> NOT REALLY
+//                 // glFinish();
+//                 eglDestroyContext(display_, context_);
+//                 CheckEGLError("eglDestroyContext");
+//                 context_ = EGL_NO_CONTEXT;
+//                 std::cerr << "AFTER eglDestroyContext" << std::endl;
+//             }
+//         }
+        
+//         std::cerr << "BEFORE eglTerminate(display_)" << std::endl;
+//         eglTerminate(display_);
+//         std::cerr << "AFTER eglTerminate(display_)" << std::endl;
+//         display_ = EGL_NO_DISPLAY;
+        
+//         n_instances_--;
+//         initial_set_up_ = false;
+//         std::cerr << "iiiiiiiiiiiiii" << std::endl;
+//     }
+// }
+
+
 
 bool RendererGeometry::SetUp() {
   const std::lock_guard<std::mutex> lock{mutex_};
@@ -51,16 +200,17 @@ bool RendererGeometry::SetUp() {
   if (!initial_set_up_) {
     // Get EGL display
     display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (display_ == EGL_NO_DISPLAY) {
+    if (display_ == EGL_NO_DISPLAY || !CheckEGLError("eglGetDisplay")) {
       std::cerr << "Failed to get EGL display" << std::endl;
       return false;
     }
 
     // Initialize EGL
     EGLint major, minor;
-    if (!eglInitialize(display_, &major, &minor)) {
-      std::cerr << "Failed to initialize EGL" << std::endl;
-      return false;
+    if (!eglInitialize(display_, &major, &minor) || 
+        !CheckEGLError("eglInitialize")) {
+        std::cerr << "Failed to initialize EGL" << std::endl;
+        return false;
     }
 
     // Bind OpenGL API
@@ -103,7 +253,7 @@ bool RendererGeometry::SetUp() {
     };
 
     context_ = eglCreateContext(display_, config, EGL_NO_CONTEXT, context_attribs);
-    if (context_ == EGL_NO_CONTEXT) {
+    if (context_ == EGL_NO_CONTEXT || !CheckEGLError("eglCreateContext")) {
       std::cerr << "Failed to create EGL context" << std::endl;
       eglTerminate(display_);
       display_ = EGL_NO_DISPLAY;
@@ -118,7 +268,7 @@ bool RendererGeometry::SetUp() {
     };
 
     surface_ = eglCreatePbufferSurface(display_, config, surface_attribs);
-    if (surface_ == EGL_NO_SURFACE) {
+    if (surface_ == EGL_NO_SURFACE || !CheckEGLError("eglCreatePbufferSurface")) {
       std::cerr << "Failed to create EGL surface" << std::endl;
       eglDestroyContext(display_, context_);
       context_ = EGL_NO_CONTEXT;
@@ -128,7 +278,7 @@ bool RendererGeometry::SetUp() {
     }
 
     // Make OpengGL context current before loading OpenGL function pointers
-    if (!eglMakeCurrent(display_, surface_, surface_, context_)) {
+    if (!eglMakeCurrent(display_, surface_, surface_, context_) || !CheckEGLError("eglMakeCurrent")) {
       std::cerr << "Failed to make EGL context current" << std::endl;
       eglDestroySurface(display_, surface_);
       surface_ = EGL_NO_SURFACE;
@@ -139,7 +289,7 @@ bool RendererGeometry::SetUp() {
       return false;
     }
 
-    if (eglGetCurrentContext() == EGL_NO_CONTEXT) {
+    if (eglGetCurrentContext() == EGL_NO_CONTEXT || !CheckEGLError("eglGetCurrentContext")) {
       fprintf(stderr, "No valid OpenGL context\n");
     }
 
@@ -325,8 +475,17 @@ void RendererGeometry::CreateGLVertexObjects(const std::vector<float> &vertices,
 }
 
 void RendererGeometry::DeleteGLVertexObjects(RenderDataBody *render_data_body) {
-  glDeleteBuffers(1, &render_data_body->vbo);
-  glDeleteVertexArrays(1, &render_data_body->vao);
+    if (!render_data_body) return;
+    
+    if (render_data_body->vbo != 0) {
+        glDeleteBuffers(1, &render_data_body->vbo);
+        render_data_body->vbo = 0;
+    }
+    
+    if (render_data_body->vao != 0) {
+        glDeleteVertexArrays(1, &render_data_body->vao);
+        render_data_body->vao = 0;
+    }
 }
 
 }  // namespace m3t

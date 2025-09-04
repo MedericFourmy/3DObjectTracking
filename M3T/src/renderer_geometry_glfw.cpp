@@ -226,20 +226,20 @@ void RendererGeometry::CreateGLVertexObjects(const std::vector<float> &vertices,
 }
 
 void RendererGeometry::DeleteGLVertexObjects(RenderDataBody *render_data_body) {
-  // glDeleteBuffers(1, &render_data_body->vbo);
-  // glDeleteVertexArrays(1, &render_data_body->vao);
-  if (!render_data_body) return;
+  glDeleteBuffers(1, &render_data_body->vbo);
+  glDeleteVertexArrays(1, &render_data_body->vao);
+  // if (!render_data_body) return;
   
-  // Validate that VAO/VBO exist before deletion
-  if (render_data_body->vao != 0) {
-    glDeleteVertexArrays(1, &render_data_body->vao);
-    render_data_body->vao = 0;
-  }
+  // // Validate that VAO/VBO exist before deletion
+  // if (render_data_body->vao != 0) {
+  //   glDeleteVertexArrays(1, &render_data_body->vao);
+  //   render_data_body->vao = 0;
+  // }
   
-  if (render_data_body->vbo != 0) {
-    glDeleteBuffers(1, &render_data_body->vbo);
-    render_data_body->vbo = 0;
-  }
+  // if (render_data_body->vbo != 0) {
+  //   glDeleteBuffers(1, &render_data_body->vbo);
+  //   render_data_body->vbo = 0;
+  // }
 }
 
 }  // namespace m3t

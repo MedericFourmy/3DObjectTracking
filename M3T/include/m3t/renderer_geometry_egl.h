@@ -24,6 +24,8 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <thread>
+#include <chrono>
 
 namespace m3t {
 
@@ -63,7 +65,7 @@ class RendererGeometry {
   RendererGeometry(const std::string &name);
   RendererGeometry(const RendererGeometry &) = delete;
   RendererGeometry &operator=(const RendererGeometry &) = delete;
-  ~RendererGeometry();  // deletes EGL context
+  virtual ~RendererGeometry();  // deletes EGL context
   bool SetUp();         // creates EGL context
 
   // Configure bodies
@@ -99,7 +101,12 @@ class RendererGeometry {
   std::mutex mutex_;
   bool initial_set_up_ = false;
   bool set_up_ = false;
+
+  bool CheckEGLError(const char* operation);
 };
+
+
+
 
 }  // namespace m3t
 
